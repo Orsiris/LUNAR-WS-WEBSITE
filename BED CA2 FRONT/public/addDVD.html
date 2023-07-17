@@ -1,0 +1,554 @@
+
+<!-- //Name: Wong Wei Jun Daniel
+//Admin Num: p2243564
+//Class: DIT/FT/1B/02 -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>DVD Rental</title>
+    <link href="css/style.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+        crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+
+    <script>
+        $(document).ready(function () {
+
+            function isValidToken() {
+                // Get the token from storage
+                var token = sessionStorage.getItem("token");
+
+                // If the token does not exist, return false
+                if (!token) {
+                    return false;
+                }
+
+                // Split the token by '.' to get the header, payload and signature
+                var parts = token.split('.');
+
+                // If the token is not composed of 3 parts, return false
+                if (parts.length !== 3) {
+                    return false;
+                }
+
+                // Decode the token and parse it as JSON
+                var decoded = JSON.parse(atob(parts[1]));
+
+                // Check if the token has expired
+                var expiry = decoded.exp;
+                if (expiry < Date.now() / 1000) {
+                    return false;
+                }
+
+                // If the token is valid and has not expired, return true
+                return true;
+            }
+
+            if (isValidToken()) {// 
+                // Remove "d-none" class from "Add Actor", "Add Customer" and "Add DVD" links
+
+                $("#Logout").removeClass("d-none").removeClass("disabled");
+                $(".nav-link.d-none").removeClass("d-none").removeClass("disabled");
+                $("#Login").addClass("d-none").addClass("disabled");
+            }
+
+            else {
+                // Redirect to login page if user has no valid token
+                window.location.replace("http://localhost:3001/login.html");
+            }
+
+
+            const yearSelect = document.getElementById("releaseYear");
+
+            // Loop through the years from 1900 to 2023
+            for (let year = 1996; year <= 2023; year++) {
+                // Create a new option element for each year
+                const option = document.createElement("option");
+                option.value = year;
+                option.text = year;
+
+                // Append the option to the select element
+                yearSelect.appendChild(option);
+
+            }
+
+            // Populate the category select element
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:8081/category",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+
+                    $("#categorySelect").append('<option value="" selected disabled hidden>Select an option</option>');
+                    // Loop through the query results and create an option for each row
+                    $.each(data, function (i, item) {
+                        $("#categorySelect").append('<option value="' + item.category_id + '">' + item.name + '</option>');
+                    });
+                    $('#categorySelect').select2();
+                }
+            });
+
+            // Populate the actor select element
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:8081/allActors",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+
+                    $("#actorSelect").append('<option value="" selected disabled hidden>Select Actors</option>');
+                    // Loop through the query results and create an option for each row
+                    $.each(data, function (i, item) {
+                        $("#actorSelect").append('<option value="' + item.actor_id + '">' + item.first_name + ' ' + item.last_name + '</option>');
+                    });
+                    $('#actorSelect').select2();
+
+
+                }
+            });
+
+            var actors = []
+
+            // Whenever an actor is selected it creates a card which shows the actor that was picked and stores the actor_id in an array
+            $("#actorSelect").on("change", function () {
+
+                var actorname = $("#actorSelect").find("option:selected");
+                var actorid = $("#actorSelect").val();
+                actors.push(actorid)
+
+                var card = `<div class="col-md-4 my-3 p-3 rounded-3 d-flex flex-row align-items-center justify-content-md-between" id = "actorSelected">
+                          <h5>` + actorname.text() + `</h5>
+                          <button style = "background-color: #d9534f" class="btn remove-card">X</button>
+                        </div>`;
+
+                $("#actorsAdded").append(card); // append the card to the actorsAdded div
+            });
+
+            // When the remove button is clicked it removes the card and removes the actor_id from the array
+            $(document).on("click", ".remove-card", function () {
+                var cardIndex = $(this).closest("#actorSelected").index();
+                $(this).closest("#actorSelected").remove();
+                actors.splice(cardIndex, 1);
+            });
+
+            // Populate the rating select element
+            const ratingSelect = document.getElementById("ratingSelect");
+            const ratings = ["G", "PG", "PG-13", "R", "NC-17"];
+            ratings.forEach(function (rating) {
+                const option = document.createElement("option");
+                option.value = rating;
+                option.text = rating;
+
+                ratingSelect.appendChild(option);
+            });
+
+            // Populate the language select element
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:8081/language",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+
+                    $("#languageSelect").append('<option value="" selected disabled hidden>Select Language  </option>');
+                    // Loop through the query results and create an option for each row
+                    $.each(data, function (i, item) {
+                        $("#languageSelect").append('<option value="' + item.language_id + '">' + item.name + '</option>');
+                    });
+                    $('#languageSelect').select2();
+                }
+            });
+
+
+            // Add error handlers to the input fields
+            function addErrorHandlers(inputId) {
+                $("#" + inputId + "").focus(function () {
+                    $(this).removeClass("border-2").removeClass("border-danger");
+                });
+
+                $("#" + inputId).blur(function () {
+                    if ($(this).val() == "") {
+                        $(this).addClass("border-2").addClass("border-danger");
+                    }
+                });
+            }
+
+            var inputs = ["title", "languageSelect", "duration", "rate", "replacement"];
+            // Loop through the input fields and add error handlers
+            for (var i = 0; i < inputs.length; i++) {
+                addErrorHandlers(inputs[i]);
+            }
+
+
+            var specialFeatures = "";
+
+            // Checks the special features checkboxes and adds the text to the specialFeatures variable
+            const trailersCheck = document.querySelector("#trailersCheck");
+            const commentariesCheck = document.querySelector("#commentariesCheck");
+            const deletedScenesCheck = document.querySelector("#deletedScenesCheck");
+            const behindTheScenesCheck = document.querySelector("#behindTheScenesCheck");
+
+            const checkboxElements = [trailersCheck, commentariesCheck, deletedScenesCheck, behindTheScenesCheck];
+
+            checkboxElements.forEach(function (element, index) {
+                element.addEventListener("change", function () {
+                    if (this.checked) {
+                        specialFeatures += this.nextElementSibling.textContent.trim() + ",";
+
+                    }
+                });
+            });
+
+            // Executes when the submit button is clicked
+            $("#create-post-form").submit(function (e) {
+                e.preventDefault();
+
+                // Remove the last comma from the specialFeatures variable
+                specialFeatures = specialFeatures.replace(/,\s*$/, "");
+
+                // Check if all the required fields are filled
+                var isValid = true;
+                inputs.some(function (inputId) {
+                    if ($("#" + inputId).val() === "") {
+                        isValid = false;
+                        return true;
+                    }
+                });
+                if (!isValid) {
+                    return alert("Please enter all required fields")
+                }
+
+                else if ($("#languageSelect").val() == null){
+                    return alert ("Please select a language")
+                }
+
+                else if ($("#categorySelect").val() == null){
+                    return alert ("Please select a category")
+                }
+
+                else if ($("#ratingSelect").val() == null){
+                    return alert ("Please select a rating")
+                }
+
+                else if ($("#releaseYear").val() == null){
+                    return alert ("Please select a release year")
+                }
+
+                // Check if at least one special feature checkboxe is checked
+                else if (specialFeatures == "") {
+                    return alert("Please select at least one special feature")
+                }
+
+                // Check if at least one actor is selected
+                else if (actors.length == 0) {
+                    return alert("Please select at least one actor")
+                }
+
+                // Check if the input is a number
+                else if (isNaN($("#releaseYear").val()) || isNaN($("#duration").val()) || isNaN($("#rate").val()) || isNaN($("#length").val()) || isNaN($("#replacement").val())) {
+                    return alert("Please enter a valid number")
+                }
+                else {
+
+                    // Check the input for any whitespaces or if it's empty then assign null if empty
+
+                    var title = $("#title").val().trim() || null
+                    var category = $("#categorySelect").val();
+                    var description = $("#description").val().trim() || null
+                    var release_year = $("#releaseYear").val()
+                    var language_id = $("#languageSelect").val()
+                    var original_language_id = null
+                    var rental_duration = $("#duration").val().trim() || null
+                    var rental_rate = $("#rate").val().trim() || null
+                    var length = $("#length").val().trim() || null
+                    var replacement_cost = $("#replacement").val().trim()
+                    var rating = $("#ratingSelect").val()
+                    var special_features = specialFeatures
+                    var allActors = actors
+
+                    // Get the token from the session storage
+                    const token = sessionStorage.getItem("token");
+
+                    // Send the data to the server
+                    $.ajax({
+                        type: "POST",
+                        url: "http://localhost:8081/film",
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        },
+                        data: { // The data to send to the server
+                            title: title,
+                            category_id: category,
+                            description: description,
+                            release_year: release_year,
+                            language_id: language_id,
+                            rental_duration: rental_duration,
+                            rental_rate: rental_rate,
+                            length: length,
+                            replacement_cost: replacement_cost,
+                            rating: rating,
+                            special_features: special_features,
+                            actors: allActors,
+
+                        },
+                        success: function (data) {
+                            $('#successModal').modal('show'); // Show the success modal
+                        },
+                        error: function (xhr, status, error) {
+                            console.log("Error: " + xhr.responseText);
+                            $('#errorModal').modal('show'); // Show the error modal
+                        }
+                    });
+
+                }
+            });
+
+            // Logs the admin out and deletes the session storage which is where the token is stored
+            $("#Logout").click(function () {
+
+                $.ajax({
+                    url: 'http://localhost:8081/user/logout',
+                    type: 'POST',
+
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (textStatus, xhr) {
+                        window.sessionStorage.clear(); // clearing the session storage
+                        window.location.replace("http://localhost:3001/login.html"); // redirects back to the login page
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        console.log("Error: " + xhr.responseText);
+
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+
+<body>
+
+    <div class="container-fluid p-0">
+
+        <!-- NAVBAR -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="navigationbar">
+            <div class="container">
+                <a class="navbar-brand" href="Home.html">DVD Rental</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navigationbar" aria-controls="navigationbar" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link " aria-current="page" href="Home.html">Home</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item">
+                            <a class="nav-link" id="Login" href="login.html">Login</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item">
+                            <a class="nav-link disabled d-none " href="addActor.html">Add Actor</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item">
+                            <a class="nav-link disabled d-none " href="addCustomer.html">Add Customer</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item">
+                            <a class="nav-link active disabled d-none " href="addDVD.html">Add DVD</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item ">
+                            <a class="btn btn-danger disabled d-none" id="Logout" role="button">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </nav>
+
+        <div style="width: 800px;" class="container addCustomerContainer mt-5 p-5">
+            <h1 class="text-white">Add DVD</h1>
+
+            <!-- Form for adding a dvd -->
+            <form class="row gy-3 text-white" id="create-post-form" style="margin-top: 2rem;"
+                enctype="multipart/form-data">
+
+                <!-- Text input for getting DVD title -->
+                <div class="form-group col-md-12">
+                    <label class="mt-2" for="title">DVD Title*</label>
+                    <input type="text" class="form-control mt-2" id="title">
+
+                </div>
+
+                <!-- Select input for getting DVD category -->
+                <div class="col-md-12">
+                    <label class="mt-2 fs-5 mb-2 text-white" for="categorySelect">Select Category*</label>
+                    <select class="form-control mt-2 select2" id="categorySelect" data-live-search="true"></select>
+                </div>
+
+                <!-- Text input for getting DVD description -->
+                <div class="form-group col-md-12">
+                    <label class="mt-2" for="description">Movie Description</label>
+                    <textarea class="form-control mt-2" id="description"></textarea>
+                </div>
+
+                <!-- Select input for getting DVD release year -->
+                <div class="form-group col-md-6">
+                    <label class="mt-2" for="releaseYear">Release Year*</label>
+                    <select id="releaseYear" class="form-select mt-2">
+                        <option value="" selected hidden disabled>Select Release Year</option>
+                    </select>
+                </div>
+
+                <!-- Select input for getting DVD language -->
+                <div class="form-group col-md-6">
+                    <label class="my-2" for="languageSelect">Select Language*</label>
+                    <select class="form-control mt-2 select2" id="languageSelect" data-live-search="true"></select>
+                </div>
+
+                <!-- Select input for getting DVD rental duration -->
+                <div class="form-group col-md-3">
+                    <label class="mt-2" for="duration">Rental Duration*</label>
+                    <input type="text" class="form-control mt-2" id="duration">
+                </div>
+
+                <!-- Text input for getting DVD rental rate -->
+                <div class="form-group col-md-3">
+                    <label class="mt-2" for="rate">Rental Rate*</label>
+                    <input type="text" class="form-control mt-2" id="rate">
+                </div>
+
+                <!-- Text input for getting DVD length -->
+                <div class="form-group col-md-3">
+                    <label class="mt-2" for="length">Length</label>
+                    <input type="text" class="form-control mt-2" id="length">
+                </div>
+
+                <!-- Text input for getting DVD replacement cost -->
+                <div class="form-group col-md-3">
+                    <label class="mt-2" for="replacement">Replacement Cost*</label>
+                    <input type="text" class="form-control mt-2" id="replacement">
+                </div>
+
+                <!-- Select input for getting DVD rating -->
+                <div class="form-group col-md-12">
+                    <label class="mt-2" for="ratingSelect">Rating*</label>
+                    <select id="ratingSelect" class="form-select mt-2">
+                        <option value="" selected hidden disabled>Select Rating</option>
+                    </select>
+                </div>
+
+                <!-- Checkboxes for getting DVD special features -->
+                <div class="form-group col-md-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="trailersCheck">
+                        <label class="form-check-label" for="trailersCheck">
+                            Trailers
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="commentariesCheck">
+                        <label class="form-check-label" for="commentariesCheck">
+                            Commentaries
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="deletedScenesCheck">
+                        <label class="form-check-label" for="deletedScenesCheck">
+                            Deleted Scenes
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="behindTheScenesCheck">
+                        <label class="form-check-label" for="behindTheScenesCheck">
+                            Behind the Scenes
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Select input for getting DVD actors -->
+                <div class="col-md-12">
+                    <label class="mt-2 fs-5 mb-2 text-white" for="actorSelect">Select Actor</label>
+                    <select class="form-control mt-2 select2" id="actorSelect" data-live-search="true"></select>
+                </div>
+
+                <!-- Shows the actors currently selected -->
+                <div class="container mt-2">
+                    <div id="actorsAdded">
+
+                    </div>
+                </div>
+
+                <!-- Submit button -->
+                <div class="form-group col-md-12">
+                    <button type="submit" class="btn btn-primary border-0 text-white col-12 fs-5 mt-3"
+                        id="customerSubmit">Submit</button>
+                </div>
+            </form>
+
+            <!-- Modal for success -->
+            <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="modalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="modalLabel">Success</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            DVD Successfully Added!
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for error -->
+            <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="modalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="modalLabel">Error</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            An Error Occured.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+</body>
+
+</html>

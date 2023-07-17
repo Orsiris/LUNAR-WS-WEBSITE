@@ -1,0 +1,448 @@
+
+<!-- //Name: Wong Wei Jun Daniel
+//Admin Num: p2243564
+//Class: DIT/FT/1B/02 -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>DVD Rental</title>
+    <link href="css/style.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+        crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
+
+    <script>
+        $(document).ready(function () {
+
+            function isValidToken() {
+                // Get the token from storage
+                var token = sessionStorage.getItem("token");
+
+                // If the token does not exist, return false
+                if (!token) {
+                    return false;
+                }
+
+                // Split the token by '.' to get the header, payload and signature
+                var parts = token.split('.');
+
+                // If the token is not composed of 3 parts, return false
+                if (parts.length !== 3) {
+                    return false;
+                }
+
+                // Decode the token and parse it as JSON
+                var decoded = JSON.parse(atob(parts[1]));
+
+                // Check if the token has expired
+                var expiry = decoded.exp;
+                if (expiry < Date.now() / 1000) {
+                    return false;
+                }
+
+                // If the token is valid and has not expired, return true
+                return true;
+            }
+
+            if (isValidToken()) {// 
+                // Remove "d-none" class from "Add Actor", "Add Customer" and "Add DVD" links
+
+                $("#Logout").removeClass("d-none").removeClass("disabled");
+                $(".nav-link.d-none").removeClass("d-none").removeClass("disabled");
+                $("#Login").addClass("d-none").addClass("disabled");
+            }
+
+            else {
+                // Redirect to login page if user has no valid token
+                window.location.replace("http://localhost:3001/login.html");
+            }
+
+
+            // Populates the country select dropdown with countries from the database
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:8081/country",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+
+                    $("#countrySelect").append('<option value="" selected disabled hidden>Select Country</option>');
+                    // Loop through the query results and create an option for each row
+                    $.each(data, function (i, item) {
+                        $("#countrySelect").append('<option value="' + item.country_id + '">' + item.country + '</option>');
+                    });
+                    $('#countrySelect').select2();
+                }
+            });
+
+            // Populates the city dropdown with cities from the database
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:8081/allCity",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+
+                    $("#citySelect").append('<option value="" selected disabled hidden>Select City</option>');
+                    // Loop through the query results and create an option for each row
+                    $.each(data, function (i, item) {
+                        $("#citySelect").append('<option value="' + item.city_id + '">' + item.city + '</option>');
+                    });
+                    $('#citySelect').select2();
+                }
+            });
+
+            // Whenever the value of country dropdown changes, it filters the options of cities that are in the country
+            $("#countrySelect").on("change", function () {
+                country_id = $(this).val();
+
+                $.ajax({
+                    type: "GET",
+                    url: "http://localhost:8081/city",
+                    data: {
+                        country_id: country_id
+                    },
+                    success: function (data) {
+                        $("#citySelect").empty(); // clear the options
+                        $("#citySelect").append('<option value="" selected disabled hidden>Select City</option>');
+                        // Loop through the query results and create an option for each row
+                        $.each(data, function (i, item) {
+                            $("#citySelect").append('<option value="' + item.city_id + '">' + item.city + '</option>');
+                        });
+                        $('#citySelect').select2();
+                    }
+                });
+            })
+
+            // Populates the store dropdown from stores in the database
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:8081/store",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (data) {
+
+                    $("#exampleSelect").append('<option value="" selected disabled hidden>Select Store</option>');
+                    // Loop through the query results and create an option for each row
+                    $.each(data, function (i, item) {
+                        $("#storeSelect").append('<option value="' + item.store_id + '">' + item.address + '</option>');
+                    });
+                    $('#storeSelect').select2();
+                }
+            });
+            // function to add red border to text inputs if they are empty
+            function addErrorHandlers(inputId) {
+                $("#" + inputId + "").focus(function () {
+                    $(this).removeClass("border-2").removeClass("border-danger");
+                });
+
+                $("#" + inputId).blur(function () {
+                    if ($(this).val() == "") {
+                        $(this).addClass("border-2").addClass("border-danger");
+                    }
+                });
+            }
+
+            var inputs = ["firstName", "lastName", "email", "add1", "district", "citySelect", "postal", "phone",];
+            // loop through the inputs to add error handlers to each input
+            for (var i = 0; i < inputs.length; i++) {
+                addErrorHandlers(inputs[i]);
+            }
+
+            // Executes when submit is pressed
+            $("#create-post-form").submit(function (e) {
+                console.log($("postal").val())
+                e.preventDefault();
+                var isValid = true;
+                var email = $("#email").val().trim()
+                inputs.some(function (inputId) {
+                    if ($("#" + inputId).val() === "") {
+                        isValid = false;
+                        return true;
+                    }
+                });
+                // If the required fields are empty throw an alert
+                if (!isValid) {
+                    return alert("Please enter all required fields")
+                }
+                // If the email doesn't contain "@" throw an alert
+                else if (email.indexOf("@") === -1) {
+                    return alert("Please enter a valid Email Address")
+                }
+                // If the postal code or phone number is not a number throw an alert
+                else if(isNaN($("#postal").val()) || isNaN($("#phone").val())){
+                    return alert("Please enter a valid postal and phone number")
+                }
+
+                else {
+                    // Check the input for any whitespaces or if it's empty then assign null if empty
+                    var store_id = $("#storeSelect").val()
+                    var firstName = $("#firstName").val().trim() || null
+                    var lastName = $("#lastName").val().trim() || null
+                    var add1 = $("#add1").val().trim() || null
+                    var add2 = $("#add2").val().trim() || null
+                    var district = $("#district").val().trim() || null
+                    var city = $("#citySelect").val()
+                    var postal = $("#postal").val().trim() || null
+                    var phone = $("#phone").val().trim() || null
+                    const token = sessionStorage.getItem("token");
+
+                    // Api to add a customer into the database
+                    $.ajax({
+                        type: "POST",
+                        url: "http://localhost:8081/customers",
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        },
+                        data: {
+                            store_id: store_id,
+                            firstName: firstName,
+                            lastName: lastName,
+                            email: email,
+                            add1: add1,
+                            add2: add2,
+                            district: district,
+                            city: city,
+                            postal: postal,
+                            phone: phone,
+
+                        },
+                        success: function (data) {
+                            $('#successModal').modal('show'); // if successful show success message
+                        },
+                        error: function (xhr, status, error) {
+                            if (error == "Conflict") {
+                                $('#emailModal').modal('show'); // if email already exists show error message
+                            }
+                            else {
+                                $('#errorModal').modal('show'); // if error show error message
+                            }
+                        }
+                    });
+                }
+            });
+
+
+            // Logs the admin out and deletes the session storage which is where the token is stored
+            $("#Logout").click(function () {
+
+                $.ajax({
+                    url: 'http://localhost:8081/user/logout',
+                    type: 'POST',
+
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (textStatus, xhr) {
+                        window.sessionStorage.clear(); // clearing the session storage
+                        window.location.replace("http://localhost:3001/login.html"); // redirects back to the login page
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        console.log("Error: " + xhr.responseText);
+
+                    }
+                });
+            });
+        });
+    </script>
+
+
+</head>
+
+<body>
+
+    <div class="container-fluid p-0">
+
+        <!-- NAVBAR -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark" aria-label="navigationbar">
+            <div class="container">
+                <a class="navbar-brand" href="Home.html">DVD Rental</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navigationbar"
+                    aria-controls="#navigationbar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link " aria-current="page" href="Home.html">Home</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item">
+                            <a class="nav-link" id="Login" href="login.html">Login</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item">
+                            <a class="nav-link disabled d-none " href="addActor.html">Add Actor</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item">
+                            <a class="nav-link active disabled d-none " href="addCustomer.html">Add Customer</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item">
+                            <a class="nav-link disabled d-none " href="addDVD.html">Add DVD</a>
+                        </li>
+                        <!-- Disabled and invisible if the user has no token -->
+                        <li class="nav-item ">
+                            <a class="btn btn-danger disabled d-none" id="Logout" role="button">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </nav>
+        <!-- END OF NAVBAR -->
+
+        <div style="width: 700px;" class="container addCustomerContainer mt-5 p-5">
+            <h1 class="text-white">Add Customer</h1>
+
+            <!-- Form for adding a customer -->
+            <form class="row gy-3 text-white" id="create-post-form" style="margin-top: 2rem;">
+
+                <!-- Dropdown for store selection -->
+                <div class="col-md-12">
+                    <label class="my-2" for="storeSelect">Select Store*</label>
+                    <select class="form-control mt-2 select2" id="storeSelect" data-live-search="true"></select>
+                </div>
+
+                <!-- text input for first name -->
+                <div class="col-md-6">
+                    <label class="mt-2" for="firstName">First Name*</label>
+                    <input type="text" class="form-control mt-2" id="firstName">
+                </div>
+
+                <!-- text input for last name name -->
+                <div class="col-md-6">
+                    <label class="mt-2" for="lastName">Last Name*</label>
+                    <input type="text" class="form-control mt-2" id="lastName">
+                </div>
+
+                <!-- text input for email -->
+                <div class="form-group col-md-12">
+                    <label class="mt-2" for="email">Email Address*</label>
+                    <input type="text" class="form-control mt-2" id="email">
+                </div>
+
+                <!-- text input for address line 1 -->
+                <div class="form-group col-md-6">
+                    <label class="mt-2" for="add1">Address Line 1*</label>
+                    <input type="text" class="form-control mt-2" id="add1">
+                </div>
+
+                <!-- text input for address line 2 -->
+                <div class="form-group col-md-6">
+                    <label class="mt-2" for="add2">Address Line 2</label>
+                    <input type="text" class="form-control mt-2" id="add2">
+                </div>
+
+                <!-- text input for district -->
+                <div class="form-group col-12">
+                    <label class="mt-2" for="district">District*</label>
+                    <input type="text" class="form-control mt-2" id="district">
+                </div>
+
+                <!-- Dropdown for country selection -->
+                <div class="form-group col-md-6">
+                    <label class="my-2" for="countrySelect">Select Country (Filter Cities)</label>
+                    <select class="form-control mt-2 select2" id="countrySelect" data-live-search="true"></select>
+                </div>
+
+                <!-- Dropdown for city selection -->
+                <div class="form-group col-md-6">
+                    <label class="my-2" for="citySelect">Select City*</label>
+                    <select class="form-control mt-2 select2" id="citySelect" data-live-search="true"></select>
+                </div>
+
+                <!-- text input for postal code -->
+                <div class="form-group col-md-6">
+                    <label class="mt-2" for="postal">Postal Code*</label>
+                    <input type="text" class="form-control mt-2" id="postal">
+                </div>
+
+                <!-- text input for phone -->
+                <div class="form-group col-md-6">
+                    <label class="mt-2" for="phone">Phone*</label>
+                    <input type="text" class="form-control mt-2" id="phone">
+                </div>
+
+                <!-- Submit Button -->
+                <div class="form-group col-md-12">
+                    <button type="submit" class="btn btn-primary border-0 text-white col-12 fs-5 mt-3"
+                        id="customerSubmit">Submit</button>
+                </div>
+            </form>
+
+            <!-- Modal for when a customer is successfully added -->
+            <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="modalLabel">Success</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Customer Successfully Added!
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for when the email already exists -->
+            <div class="modal fade" id="emailModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="modalLabel">Error</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Email Already Exists.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for when an error occurs -->
+            <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="modalLabel">Error</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            An Error Occured.
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
+</body>
+
+</html>

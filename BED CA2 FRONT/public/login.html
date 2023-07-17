@@ -1,0 +1,77 @@
+<!-- //Name: Wong Wei Jun Daniel
+//Admin Num: p2243564
+//Class: DIT/FT/1B/02 -->
+
+<!DOCTYPE html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Login</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Yanone+Kaffeesatz:wght@200;300;400;500;600;700&display=swap"
+		rel="stylesheet">
+	<link href="css/login.css" rel="stylesheet" />
+	<link href="../dist/output.css" rel="stylesheet" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+		crossorigin="anonymous"></script>
+
+	<script>
+
+		$(document).ready(function () {
+
+			// Brings customers to the search page
+			$("#Customer").click(function () {
+				window.location.replace("http://localhost:3001/Home.html");
+			});
+
+			// Function to validate and give token to the admin for their session then brings them to the search page
+			$("#Login").click(function () {
+				var email = $('#email').val(); // getting value of email entered
+				var pwd = $('#pwd').val(); // getting value of password entered
+				var data = "{\"email\":\"" + email + "\", \"password\":\"" + pwd + "\"}";
+				console.log(data);
+				$.ajax({
+					url: 'http://localhost:8081/user/login',
+					type: 'POST',
+					data: data,
+					contentType: "application/json; charset=utf-8",
+					dataType: "json",
+					success: function (data, textStatus, xhr) {
+						if (data != null) {
+							sessionStorage.setItem('token', data.token); // Stores the token in the session storage
+							sessionStorage.setItem('userInfo', data.UserData); // Stores the userdata in the session storage
+							window.location.replace("http://localhost:3001/Home.html");
+						} else {
+							console.log("an Error occured");
+						}
+					},
+					error: function (xhr, textStatus, errorThrown) {
+
+						alert("Username/Password Does Not Match");
+					}
+				});
+
+				return false;
+			});
+
+
+
+		}); 
+	</script>
+</head>
+
+<body class="flex justify-center items-center">
+	<div class="container">
+
+		<div class="flex justify-center items-center">
+		<h1>PAPER TRAIL</h1><img class="logo" src = "./imgs/paper-plane.png"/>
+		</div>
+
+	</div>
+</body>
+
+</html>

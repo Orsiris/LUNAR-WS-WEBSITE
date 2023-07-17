@@ -1,0 +1,22 @@
+@charset "utf-8";
+
+body{
+    background-color: #E6B17E;
+  min-height: 100vh;
+
+}
+
+
+
+h1{
+    font-family: 'Yanone Kaffeesatz', sans-serif;
+}
+
+div.logo-container{
+    font-family: 'Yanone Kaffeesatz', sans-serif;
+}
+
+img.logo{
+    width:64px;
+    height:64px;
+}
