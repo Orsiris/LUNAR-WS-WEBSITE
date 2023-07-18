@@ -30,6 +30,13 @@ h1.slogan{
     font-weight: 200;
 }
 
+h1.collectionTitle{
+  font-family: 'Yanone Kaffeesatz', sans-serif;
+    letter-spacing: 5px;
+    font-size: 4rem;
+    font-weight: 300;
+}
+
 .sloganDiv{
   margin-right: 6rem;
 }
@@ -74,7 +81,7 @@ img.logo{
 
 .card-img-top {
   width: 100%;
-  height: 20vw;
+  height: 16vw;
   object-fit: contain;
 }
 
