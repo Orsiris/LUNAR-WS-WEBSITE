@@ -40,18 +40,19 @@
 						var card = $('<div class="card home-card pt-4"></div>');
 
 						// Create the link element
-						var link = $('<a href="#" class="card-link"></a>').attr('data-index', book.bookid);
+						var link = $('<a href="bookDetails.html?bookid=' + book.bookid + '" class="card-link"></a>')
+
 
 
 						// Create the image element
-						var image = $('<img src="' + "." + book.imgurl + '" class="card-img-top" alt="...">');
+						var image = $('<img src="' +  book.imgurl + '" class="card-img-top" alt="...">');
 
 						// Create the card body
 						var cardBody = $('<div class="card-body"></div>');
 
 						// Create the card title and price
-						var title = $('<h4 class="card-title fw-normal">' + book.title + '</h5>');
-						var price = $('<h4 class="card-title fw-light">$' + book.price + '</h5>');
+						var title = $('<h4 class="card-title fw-normal">' + book.title + '</h4>');
+						var price = $('<h5 class="card-title fw-normal">$' + book.price + '</h5>');
 
 						// Append elements to the card body
 						cardBody.append(title, price);
@@ -70,7 +71,36 @@
 					}
 				}
 			});
+			
 
+			$("#searchForm").submit(function (event) {
+				event.preventDefault(); // Prevent form from submitting in the traditional way
+
+				// Get the values from the form
+				var searchText = $("input[name='search']").val();
+				var searchType = $("#searchType").val();
+
+				// Choose the endpoint based on the selected option
+				var endpoint;
+				if (searchType === "title") {
+					endpoint = "http://localhost:8081/lunar-ws/books/getBookByTitle/" + searchText;
+				} else if (searchType === "author") {
+					endpoint = "http://localhost:8081/lunar-ws/books/getBookByAuthor/" + searchText;
+				}
+
+				// Make the AJAX request
+				$.ajax({
+					type: "GET",
+					url: endpoint,
+					success: function (data) {
+						sessionStorage.setItem("searchResults", JSON.stringify(data)); // saving search results in session storage
+							window.location.assign("searchResults.html"); // redirect to next page to show results of search
+					},
+					error: function () {
+						console.log("Error fetching book data.");
+					},
+				});
+			});
 
 
 
@@ -126,8 +156,22 @@
 
 
 	<div class="container my-5">
-		<h1 class=" text-dark collectionTitle">Our Collection</h1>
-		<div class="row mt-3 gy-4 gx-4 text-center" id="allBooks">
+		<div class="d-flex align-items-center justify-content-between">
+			<h1 class=" text-dark collectionTitle">Our Collection</h1>
+			<div class="search w-50">
+				<form id="searchForm">
+					<i class="fa fa-search"></i>
+					<input type="text" class="form-control" name="search" placeholder="Search...">
+
+					<select name="search" class="form-select text-center border-3 border-dark rounded-5"
+						id="searchType">
+						<option value="title" class="text-start" selected>By Title</option>
+						<option value="author" class="text-start">By Author</option>
+					</select>
+				</form>
+			</div>
+		</div>
+		<div class="row mt-3 p-3 gy-4 gx-4 text-center" id="allBooks">
 
 
 
