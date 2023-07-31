@@ -56,7 +56,7 @@
 
             $.ajax({
                 type: "GET",
-                url: "http://localhost:8081/lunar-ws/books/getBookByGenre/" + genre,
+                url: "https://lunar-ws.delightfulmoss-8e24ee3a.eastus.azurecontainerapps.io/books/getBookByGenre/" + genre,
                 success: function (data) {
                     // Loop through the data array
                     for (var i = 0; i < data.length; i++) {
@@ -72,7 +72,7 @@
 
 
                         // Create the image element
-                        var image = $('<img src="' +  book.imgurl + '" class="card-img-top" alt="...">');
+                        var image = $('<img src="' + "." +   book.imgurl + '" class="card-img-top" alt="...">');
 
                         // Create the card body
                         var cardBody = $('<div class="card-body"></div>');

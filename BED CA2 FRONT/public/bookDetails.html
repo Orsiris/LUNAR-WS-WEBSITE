@@ -34,7 +34,7 @@
 
 			$.ajax({
 				type: "GET",
-				url: "http://localhost:8081/lunar-ws/books/getBook/" + bookid,
+				url: "https://lunar-ws.delightfulmoss-8e24ee3a.eastus.azurecontainerapps.io/books/getBook/" + bookid,
 				success: function (data) {
 					$("#bookImage").attr("src", "." + data.imgurl);
 					$("#title").text(data.title);

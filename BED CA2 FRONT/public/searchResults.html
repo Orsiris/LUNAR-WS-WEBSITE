@@ -46,7 +46,7 @@
 
 
 					// Create the image element
-					var image = $('<img src="' +  book.imgurl + '" class="card-img-top" alt="...">');
+					var image = $('<img src="' + "." +   book.imgurl + '" class="card-img-top" alt="...">');
 
 					// Create the card body
 					var cardBody = $('<div class="card-body"></div>');
@@ -86,9 +86,9 @@
 				// Choose the endpoint based on the selected option
 				var endpoint;
 				if (searchType === "title") {
-					endpoint = "http://localhost:8081/lunar-ws/books/getBookByTitle/" + searchText;
+					endpoint = "https://lunar-ws.delightfulmoss-8e24ee3a.eastus.azurecontainerapps.io/books/getBookByTitle/" + searchText;
 				} else if (searchType === "author") {
-					endpoint = "http://localhost:8081/lunar-ws/books/getBookByAuthor/" + searchText;
+					endpoint = "https://lunar-ws.delightfulmoss-8e24ee3a.eastus.azurecontainerapps.io/books/getBookByAuthor/" + searchText;
 				}
 
 				// Make the AJAX request
